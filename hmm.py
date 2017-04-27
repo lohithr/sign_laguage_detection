@@ -81,6 +81,9 @@ class HMM:
 				den += self.gamma[t][i]
 			self.covarianceMatrices[i] = num / den
 
+	def train(observation_sequence, num_iter = 10):
+		for i in range(num_iter): self.iteration(observation_sequence)
+
 
 numClasses = 95
 filenames = {}
@@ -94,8 +97,14 @@ for dirname in os.listdir("tctodd"):
 		word = filename[:-6]
 		filenames[word] = 1
 
-wholeDataForOneClass = [[] for i in range(95)]
-numFrames = [[0 for j in range(0)] for i in range(95)]
+hmms = [HMM for i in range(numClasses)]
+
+# hmms contain 95 HMMs one for each Class
+# for each hmm:
+# 	say we are currently dealing with hmm of "alive"
+# 	there are 24 observation sequences for alive.
+# 	for each observation sequence of alive 
+# 		call hmm.train(observation sequence, number of iterations)
 
 it = 0
 for key, val in filenames.items():
@@ -123,78 +132,3 @@ for key, val in filenames.items():
 						wholeDataForOneClass[val].append(dims)
 						lineno += 1
 					numFrames[val].append(lineno)
-
-print "Division by zero after this .."
-
-hmms = [hmm.GaussianHMM(n_components = 4) for i in range(95)]
-for i in range(95):
-	hmms[i].fit(wholeDataForOneClass[i], numFrames[i])
-
-print "Division by zero ends .."
-
-numCorrect = 0
-numTotal = 0
-for key, val in filenames.items():
-	for sample in range(3):
-		with open("tctodd/test/"+key+"-"+str(sample+1)+".tsd") as testC:
-		#with open("tctodd/test/responsible-1.tsd") as testC:
-			frames = []
-			for line in testC:
-				dims = line.split("\t")
-				dims = map(float, dims)
-				frames.append(dims)
-
-		scores = []
-		for i in range(95):
-			j = hmms[i].score(frames)
-			scores.append(j)
-
-		maxScore = scores[94]
-		testScore = 0
-		maxClass = revfilenames[94]
-
-		for i in range(94):
-			if revfilenames[i] == key:
-				testScore = scores[i]
-			if scores[i] > maxScore:
-				maxScore = scores[i]
-				maxClass = revfilenames[i]
-
-		# print maxClass+" : "+str(maxScore)
-		# print key+" : "+str(testScore)
-
-		if key == maxClass: numCorrect += 1
-		numTotal += 1
-
-print numCorrect
-print numTotal
-print (numCorrect*1.0)/numTotal
-
-# testKey = "responsible"
-# with open("tctodd/test/"+testKey+"-1.tsd") as testC:
-# 	for line in testC:
-# 		dims = line.split("\t")
-# 		dims = map(float, dims)
-# 		frames.append(dims)
-
-# 	scores = []
-# 	for i in range(95):
-# 		j = hmms[i].score(frames)
-# 		scores.append(j)
-
-# 	maxScore = scores[94]
-# 	testScore = 0
-# 	maxClass = revfilenames[94]
-
-# 	for i in range(94):
-# 		if revfilenames[i] == testKey:
-# 			testScore = scores[i]
-# 		if scores[i] > maxScore:
-# 			maxScore = scores[i]
-# 			maxClass = revfilenames[i]
-
-# 	print maxClass+" : "+str(maxScore)
-# 	print testKey+" : "+str(testScore)
-
-# 	if testKey == maxClass: numCorrect += 1
-# 	numTotal += 1
