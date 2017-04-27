@@ -3,6 +3,46 @@ import os
 from hmmlearn import hmm
 import warnings
 from scipy.stats import multivariate_normal
+import glob
+
+mymap =  {}
+train_map = {}
+test_map = {}
+train = []
+test = []
+res = []
+test_res = []
+class_string_list = []
+data_folder = "tctodd"
+data_sets = glob.glob(data_folder+"/*")
+
+traind_len = len(data_sets)
+counter = 0
+val = 0
+for i in range(traind_len):
+	
+	obs_files = glob.glob(data_sets[i]+"/*")
+	for j in range(len(obs_files)):
+		data =  open(obs_files[j]).read().split()
+		data = [float(l) for l in data]
+		obs_files[j] = obs_files[j].replace(data_sets[i]+"/","")
+		for j1 in range(6):
+			obs_files[j] = obs_files[j].replace("-"+str(j1+1)+".tsd","")
+			obs_files[j] = obs_files[j].replace("_"+str(j1),"")
+		if obs_files[j] not in mymap:
+			mymap[obs_files[j]] = counter
+			train_map[obs_files[j]] = []
+			test_map[obs_files[j]] = []
+			counter = counter +1
+		val = max(val,len(data))
+		if "tctodd" in data_sets[i]:
+			train.append(data)
+			train_map[obs_files[j]].append(data)
+			res.append(mymap[obs_files[j]])
+		if "test" in data_sets[i]:
+			test.append(data)
+			test_map[obs_files[j]].append(data)
+			test_res.append(mymap[obs_files[j]])
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -85,17 +125,17 @@ class HMM:
 		for i in range(num_iter): self.iteration(observation_sequence)
 
 
-numClasses = 95
-filenames = {}
-revfilenames = {}
-for dirname in os.listdir("tctodd"):
-	# print dirname
-	if dirname == "test":
-		continue
-	for filename in os.listdir("tctodd/"+dirname):
-		# print "\t"+filename
-		word = filename[:-6]
-		filenames[word] = 1
+# numClasses = 95
+# filenames = {}
+# revfilenames = {}
+# for dirname in os.listdir("tctodd"):
+# 	# print dirname
+# 	if dirname == "test":
+# 		continue
+# 	for filename in os.listdir("tctodd/"+dirname):
+# 		# print "\t"+filename
+# 		word = filename[:-6]
+# 		filenames[word] = 1
 
 hmms = [HMM for i in range(numClasses)]
 
@@ -105,6 +145,12 @@ hmms = [HMM for i in range(numClasses)]
 # 	there are 24 observation sequences for alive.
 # 	for each observation sequence of alive 
 # 		call hmm.train(observation sequence, number of iterations)
+
+num_itr = 10
+class_string_list = list(mymap.keys())
+for index in range(len(hmms)):
+	for observation in train_map[index]:
+		hmms[index].train(observation,num_itr)
 
 it = 0
 for key, val in filenames.items():
