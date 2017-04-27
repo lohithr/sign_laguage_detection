@@ -33,7 +33,7 @@ class HMM:
 			self.means[i] = np.random.rand(num_dim)
 		####### DO K MEANS #######
 
-	def calc_alpha(self, observation_sequence):
+	def iteration(self, observation_sequence):
 		num_steps = observation_sequence.shape(0)
 		self.alpha = np.zeros((num_steps, num_states))
 		self.b = np.zeros((num_states, num_steps))
@@ -43,9 +43,44 @@ class HMM:
 
 		self.alpha[0] = np.multiply(self.pi, self.b[:,0])
 		self.alpha[0] = self.alpha[0] / self.alpha[0].sum(axis=1, keepdims=True)
-		for j in range(1, num_steps):
-			self.alpha[j] = np.dot(self.alpha[j-1], self.a)
-			
+		for t in range(1, num_steps):
+			self.alpha[t] = np.dot(self.alpha[t-1], self.a)
+			self.alpha[t] = np.multiply(self.b[:, t], self.alpha[t])
+			self.alpha[t] = self.alpha[t] / self.alpha[t].sum(axis=1, keepdims=True)
+
+		self.beta = np.zeros((num_steps, num_states))
+		self.beta[num_steps-1] = np.ones(num_states)
+		self.beta[num_steps-1] = self.beta[num_steps-1] / self.beta[num_steps-1].sum(axis=1, keepdims=True)
+		for t in range(num_steps-2, 0, -1):
+			self.beta[t] = np.dot(np.multiply(self.beta[t+1], self.b[:, t]), self.a)
+			self.beta[t] = self.beta[t] / self.beta[t].sum(axis=1, keepdims=True)
+
+		self.zeta = np.zeros((num_steps-1, num_states, num_states))
+		for t in range(num_steps-1):
+			for i in range(num_states):
+				for j in range(num_states):
+					self.zeta[t][i][j] = alpha[t]*a[i][j]*beta[t+1][j]*b[j][t+1]
+
+		self.gamma = np.sum(zeta, axis = 2)
+
+		self.pi = self.gamma[0]
+		self.a = np.sum(zeta, axis = 0)
+		normalizationArray = np.sum(zeta, axis = 2)
+		normalizationArray = np.sum(normalizationArray, axis = 0)
+		self.a = self.a.T / normalizationArray
+		self.means = np.dot(self.gamma.T, observation_sequence)
+		normalizationArray = np.sum(self.gamma, axis = 0)
+		self.means = self.means / normalizationArray
+
+		num_dim = self.covarianceMatrices.shape(0)
+		for i in range(num_dim):
+			num = np.zeros((num_dim, num_dim))
+			den = 0
+			for t in range(num_steps):
+				num += self.gamma[t][i]*(observation_sequence[t] - self.means[i])*((observation_sequence[t] - self.means[i]).T)
+				den += self.gamma[t][i]
+			self.covarianceMatrices[i] = num / den
+
 
 numClasses = 95
 filenames = {}
