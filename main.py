@@ -3,6 +3,8 @@ import scipy.signal
 import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np 
+import scipy.signal
 import glob
 
 mymap =  {}
@@ -45,6 +47,7 @@ for i in range(traind_len):
 		if "test" in data_sets[i]:
 			test.append(data)
 			test_res.append(mymap[obs_files[j]])
+
 
 def print_confusion(conf_arr):
 	legends = [i for i in range(95)]
