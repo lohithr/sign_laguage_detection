@@ -6,8 +6,8 @@ from scipy.stats import multivariate_normal
 import glob
 
 mymap =  {}
-train_map = {}
-test_map = {}
+train_list = []
+test_list = []
 train = []
 test = []
 res = []
@@ -23,28 +23,34 @@ for i in range(traind_len):
 	
 	obs_files = glob.glob(data_sets[i]+"/*")
 	for j in range(len(obs_files)):
-		data =  open(obs_files[j]).read().split()
-		data = [float(l) for l in data]
+		data =  open(obs_files[j]).read().split('\n')
+		for i1 in range(len(data)):
+			l = data[i1].split()
+			if len(l) != 0:
+				data[i1] = list(map(float, l))
+
+		# for o in data : print(o)
 		obs_files[j] = obs_files[j].replace(data_sets[i]+"/","")
 		for j1 in range(6):
 			obs_files[j] = obs_files[j].replace("-"+str(j1+1)+".tsd","")
 			obs_files[j] = obs_files[j].replace("_"+str(j1),"")
 		if obs_files[j] not in mymap:
 			mymap[obs_files[j]] = counter
-			train_map[obs_files[j]] = []
-			test_map[obs_files[j]] = []
+			train_list.append([])
+			test_list.append([])
 			counter = counter +1
 		val = max(val,len(data))
 		if "tctodd" in data_sets[i]:
 			train.append(data)
-			train_map[obs_files[j]].append(data)
+			train_list[mymap[obs_files[j]]].append(data)
 			res.append(mymap[obs_files[j]])
 		if "test" in data_sets[i]:
 			test.append(data)
-			test_map[obs_files[j]].append(data)
+			test_list[mymap[obs_files[j]]].append(data)
 			test_res.append(mymap[obs_files[j]])
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+# print(train[0])
 
 class HMM:
 	def __init__(self, num_states):
@@ -121,22 +127,11 @@ class HMM:
 				den += self.gamma[t][i]
 			self.covarianceMatrices[i] = num / den
 
-	def train(observation_sequence, num_iter = 10):
+	def train(self,observation_sequence, num_iter = 10):
 		for i in range(num_iter): self.iteration(observation_sequence)
 
 
-# numClasses = 95
-# filenames = {}
-# revfilenames = {}
-# for dirname in os.listdir("tctodd"):
-# 	# print dirname
-# 	if dirname == "test":
-# 		continue
-# 	for filename in os.listdir("tctodd/"+dirname):
-# 		# print "\t"+filename
-# 		word = filename[:-6]
-# 		filenames[word] = 1
-
+numClasses = 95
 hmms = [HMM for i in range(numClasses)]
 
 # hmms contain 95 HMMs one for each Class
@@ -149,7 +144,7 @@ hmms = [HMM for i in range(numClasses)]
 num_itr = 10
 class_string_list = list(mymap.keys())
 for index in range(len(hmms)):
-	for observation in train_map[index]:
+	for observation in train_list[index]:
 		hmms[index].train(observation,num_itr)
 
 it = 0
