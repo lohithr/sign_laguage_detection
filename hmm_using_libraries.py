@@ -4,22 +4,23 @@ from hmmlearn import hmm
 import warnings
 from scipy.stats import multivariate_normal
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore") # Some functions which are depricated as part of hmmlearn library. 
+									# We can use them anyways. It is just a warning that they will be 
+									# removed in the next version
 
 numClasses = 95
 filenames = {}
 revfilenames = {}
 for dirname in os.listdir("tctodd"):
-	# print dirname
 	if dirname == "test":
 		continue
 	for filename in os.listdir("tctodd/"+dirname):
-		# print "\t"+filename
 		word = filename[:-6]
 		filenames[word] = 1
 
 wholeDataForOneClass = [[] for i in range(95)]
 numFrames = [[0 for j in range(0)] for i in range(95)]
+correctClass = [0 for i in range(95)]
 
 it = 0
 for key, val in filenames.items():
@@ -43,18 +44,14 @@ for key, val in filenames.items():
 					lineno = 0
 					for line in f:
 						dims = line.split("\t")
-						dims = map(float, dims)
+						dims = list(map(float, dims))
 						wholeDataForOneClass[val].append(dims)
 						lineno += 1
 					numFrames[val].append(lineno)
 
-print "Division by zero after this .."
-
-hmms = [hmm.GaussianHMM(n_components = 4) for i in range(95)]
+hmms = [hmm.GaussianHMM(n_components = 5) for i in range(95)]
 for i in range(95):
 	hmms[i].fit(wholeDataForOneClass[i], numFrames[i])
-
-print "Division by zero ends .."
 
 numCorrect = 0
 numTotal = 0
@@ -65,7 +62,7 @@ for key, val in filenames.items():
 			frames = []
 			for line in testC:
 				dims = line.split("\t")
-				dims = map(float, dims)
+				dims = list(map(float, dims))
 				frames.append(dims)
 
 		scores = []
@@ -84,41 +81,13 @@ for key, val in filenames.items():
 				maxScore = scores[i]
 				maxClass = revfilenames[i]
 
-		# print maxClass+" : "+str(maxScore)
-		# print key+" : "+str(testScore)
+		if key == maxClass: 
+			numCorrect += 1
+			correctClass[val] += 1
+		else:
 
-		if key == maxClass: numCorrect += 1
 		numTotal += 1
 
-print numCorrect
-print numTotal
-print (numCorrect*1.0)/numTotal
-
-# testKey = "responsible"
-# with open("tctodd/test/"+testKey+"-1.tsd") as testC:
-# 	for line in testC:
-# 		dims = line.split("\t")
-# 		dims = map(float, dims)
-# 		frames.append(dims)
-
-# 	scores = []
-# 	for i in range(95):
-# 		j = hmms[i].score(frames)
-# 		scores.append(j)
-
-# 	maxScore = scores[94]
-# 	testScore = 0
-# 	maxClass = revfilenames[94]
-
-# 	for i in range(94):
-# 		if revfilenames[i] == testKey:
-# 			testScore = scores[i]
-# 		if scores[i] > maxScore:
-# 			maxScore = scores[i]
-# 			maxClass = revfilenames[i]
-
-# 	print maxClass+" : "+str(maxScore)
-# 	print testKey+" : "+str(testScore)
-
-# 	if testKey == maxClass: numCorrect += 1
-# 	numTotal += 1
+print("Number of correctly classified instances = ", numCorrect)
+print("Number of total instances = ", numTotal)
+print("Accuracy = ", (numCorrect*100.0)/numTotal)
