@@ -50,12 +50,14 @@ for i in range(traind_len):
 
 
 def print_confusion(conf_arr):
-	legends = [i for i in range(95)]
-	df_cm = pd.DataFrame(conf_arr, index = legends, columns = legends)
-	plt.figure(figsize = (10,7))
-	sn.set(font_scale=1.4)
-	sn.heatmap(df_cm, annot=True, annot_kws={"size":16})
-	sn.plt.show()
+	ticks=np.linspace(0, 94,num=95)
+	# conf_arr = conf_arr[:,:,0]
+	plt.imshow(conf_arr, interpolation='none',cmap="jet")
+	plt.colorbar()
+	plt.xticks(ticks,fontsize=6)
+	plt.yticks(ticks,fontsize=6)
+	plt.grid(True)
+	plt.show()
 
 ########################################################
 from sklearn.linear_model import SGDClassifier
