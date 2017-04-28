@@ -80,7 +80,7 @@ for key, val in filenames.items():
 			if scores[i] > maxScore:
 				maxScore = scores[i]
 				maxClass = revfilenames[i]
-
+				
 		if key == maxClass: 
 			numCorrect += 1
 			correctClass[val] += 1
